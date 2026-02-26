@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FlowDoc AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  /* ── CSS Variables ─────────────────────────────────────────── */
+  :root {
+    --transition-theme: background 0.35s ease, color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+  }
+
+  [data-theme="dark"] {
+    --bg-base:     #0a0a0f;
+    --bg-surface:  #111118;
+    --bg-elevated: #18181f;
+    --bg-hover:    #1e1e28;
+    --bg-active:   #22222e;
+    --border:      #2a2a38;
+    --border-bright: #3a3a50;
+    --text-primary: #e8e8f0;
+    --text-secondary: #8888aa;
+    --text-muted:  #55556a;
+    --accent:      #7c6aff;
+    --accent-glow: rgba(124,106,255,0.25);
+    --accent-dim:  #4a3dcc;
+    --success:     #2dd4a0;
+    --warning:     #f5a623;
+    --danger:      #ff5370;
+    --code-bg:     #0d0d14;
+    --tag-bg:      #1a1a28;
+    --scrollbar:   #2a2a3a;
+  }
+
+  [data-theme="light"] {
+    --bg-base:     #f4f4f8;
+    --bg-surface:  #ffffff;
+    --bg-elevated: #fafafa;
+    --bg-hover:    #f0f0f6;
+    --bg-active:   #ebebf5;
+    --border:      #e0e0ec;
+    --border-bright: #c8c8e0;
+    --text-primary: #16161e;
+    --text-secondary: #5a5a7a;
+    --text-muted:  #9898b0;
+    --accent:      #5b4af0;
+    --accent-glow: rgba(91,74,240,0.15);
+    --accent-dim:  #8878ff;
+    --success:     #1a9e78;
+    --warning:     #d4870e;
+    --danger:      #e03050;
+    --code-bg:     #f0f0f8;
+    --tag-bg:      #ebebf5;
+    --scrollbar:   #d0d0e0;
+  }
+
+  /* ── Reset & Base ──────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body, #root {
+    height: 100%;
+    font-family: 'Syne', sans-serif;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    transition: var(--transition-theme);
+    overflow: hidden;
+  }
+
+  body {
+    font-size: 13px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 2px; }
+
+  /* ── Layout ────────────────────────────────────────────────── */
+  .plugin-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Header ────────────────────────────────────────────────── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-surface);
+    flex-shrink: 0;
+    transition: var(--transition-theme);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-mark {
+    width: 26px;
+    height: 26px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-dim));
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+
+  .logo-text {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+  }
+
+  .logo-text span {
+    color: var(--accent);
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .icon-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 13px;
+  }
+
+  .icon-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-bright);
+    color: var(--text-primary);
+  }
+
+  /* ── Selection Bar ─────────────────────────────────────────── */
+  .selection-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    transition: var(--transition-theme);
+  }
+
+  .sel-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+
+  .sel-indicator.active {
+    background: var(--success);
+    box-shadow: 0 0 6px var(--success);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .sel-text {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── Main Scroll Area ──────────────────────────────────────── */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* ── Cards ─────────────────────────────────────────────────── */
+  .card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    transition: var(--transition-theme);
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ── Upload Zone ───────────────────────────────────────────── */
+  .upload-zone {
+    border: 1.5px dashed var(--border-bright);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: var(--bg-elevated);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--bg-hover);
+    box-shadow: inset 0 0 20px var(--accent-glow);
+  }
+
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .upload-icon {
+    font-size: 24px;
+    margin-bottom: 6px;
+  }
+
+  .upload-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+  }
+
+  .upload-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .upload-preview {
+    max-width: 100%;
+    max-height: 140px;
+    object-fit: contain;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  /* ── Suggestion Alert ──────────────────────────────────────── */
+  .suggestion-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(245, 166, 35, 0.08);
+    border: 1px solid rgba(245, 166, 35, 0.3);
+    border-radius: 8px;
+    animation: slideDown 0.3s ease;
+  }
+
+  @keyframes slideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .alert-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+
+  .alert-content { flex: 1; }
+
+  .alert-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--warning);
+    margin-bottom: 2px;
+  }
+
+  .alert-desc {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .alert-cta {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    background: rgba(245,166,35,0.15);
+    border: 1px solid rgba(245,166,35,0.4);
+    border-radius: 4px;
+    color: var(--warning);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .alert-cta:hover { background: rgba(245,166,35,0.25); }
+
+  /* ── Gap Cards ─────────────────────────────────────────────── */
+  .gap-card {
+    padding: 10px 12px;
+    background: rgba(255, 83, 112, 0.06);
+    border: 1px solid rgba(255, 83, 112, 0.25);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+  }
+
+  .gap-card:last-child { margin-bottom: 0; }
+
+  .gap-node {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--danger);
+    margin-bottom: 4px;
+  }
+
+  .gap-issue {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+  }
+
+  .gap-suggestion {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-style: italic;
+    padding-top: 4px;
+    border-top: 1px solid rgba(255,83,112,0.15);
+  }
+
+  /* ── Buttons ───────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 7px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+    font-family: 'Syne', sans-serif;
+    letter-spacing: 0.01em;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 12px var(--accent-glow);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    filter: brightness(1.12);
+    box-shadow: 0 4px 18px var(--accent-glow);
+    transform: translateY(-1px);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-secondary {
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+    border-color: var(--border);
+  }
+
+  .btn-secondary:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-bright);
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-secondary);
+    border-color: transparent;
+    padding: 6px 10px;
+  }
+
+  .btn-ghost:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+  }
+
+  .btn-full { width: 100%; }
+
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+
+  .btn-success {
+    background: var(--success);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(45,212,160,0.2);
+  }
+
+  /* ── Tabs ──────────────────────────────────────────────────── */
+  .tab-bar {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-elevated);
+    border-radius: 8px;
+    padding: 3px;
+    margin-bottom: 12px;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    color: var(--text-muted);
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .tab.active {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  }
+
+  .tab:hover:not(.active) {
+    color: var(--text-secondary);
+    background: var(--bg-hover);
+  }
+
+  /* ── Code Block ────────────────────────────────────────────── */
+  .code-wrap {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: var(--bg-elevated);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .code-lang {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .code-copy {
+    font-size: 10px;
+    padding: 3px 8px;
+    background: var(--bg-active);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .code-copy:hover { color: var(--text-primary); border-color: var(--border-bright); }
+  .code-copy.copied { color: var(--success); border-color: var(--success); }
+
+  pre {
+    background: var(--code-bg);
+    padding: 14px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.65;
+    color: var(--text-primary);
+    margin: 0;
+    max-height: 240px;
+    white-space: pre;
+  }
+
+  /* ── Doc Output ────────────────────────────────────────────── */
+  .doc-title {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    line-height: 1.2;
+  }
+
+  .doc-description {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .step-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--accent-glow);
+    border: 1.5px solid var(--accent);
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .step-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* ── States Grid ───────────────────────────────────────────── */
+  .states-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .state-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    transition: all 0.15s;
+  }
+
+  .state-item:hover {
+    border-color: var(--border-bright);
+    background: var(--bg-hover);
+  }
+
+  .state-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+  }
+
+  .badge-start { background: rgba(45,212,160,0.15); color: var(--success); }
+  .badge-end { background: rgba(255,83,112,0.15); color: var(--danger); }
+  .badge-state { background: rgba(124,106,255,0.15); color: var(--accent); }
+  .badge-conditional { background: rgba(245,166,35,0.15); color: var(--warning); }
+  .badge-data { background: rgba(100,180,255,0.15); color: #64b4ff; }
+
+  .state-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    flex: 1;
+  }
+
+  .state-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* ── Export Row ────────────────────────────────────────────── */
+  .export-row {
+    display: flex;
+    gap: 8px;
+    padding-top: 4px;
+  }
+
+  /* ── Version Button ────────────────────────────────────────── */
+  .version-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .version-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  .version-btn.saved {
+    border-color: var(--success);
+    color: var(--success);
+    background: rgba(45,212,160,0.08);
+  }
+
+  /* ── Confidence Badge ──────────────────────────────────────── */
+  .confidence-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .conf-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .conf-high { background: rgba(45,212,160,0.12); color: var(--success); border: 1px solid rgba(45,212,160,0.3); }
+  .conf-medium { background: rgba(245,166,35,0.12); color: var(--warning); border: 1px solid rgba(245,166,35,0.3); }
+  .conf-low { background: rgba(255,83,112,0.12); color: var(--danger); border: 1px solid rgba(255,83,112,0.3); }
+
+  /* ── Loading ───────────────────────────────────────────────── */
+  .loading-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 0;
+    gap: 14px;
+  }
+
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 2.5px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-msg {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    animation: blink 1.5s ease infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* ── Toast ─────────────────────────────────────────────────── */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-bright);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 12px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    z-index: 999;
+    animation: toastIn 0.25s ease;
+    white-space: nowrap;
+  }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  .toast-icon { font-size: 14px; }
+
+  /* ── Footer ────────────────────────────────────────────────── */
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 8px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-surface);
+    flex-shrink: 0;
+    transition: var(--transition-theme);
+  }
+
+  .footer-info {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .info-icon {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+
+  /* ── Misc Helpers ──────────────────────────────────────────── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 10px 0;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--text-muted);
+  }
+
+  .empty-state-icon { font-size: 32px; margin-bottom: 8px; opacity: 0.5; }
+  .empty-state-text { font-size: 12px; line-height: 1.5; }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .noise-note {
+    padding: 6px 10px;
+    background: var(--bg-elevated);
+    border-left: 2px solid var(--text-muted);
+    border-radius: 0 6px 6px 0;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 7px;
+    background: var(--tag-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-muted);
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ── Config ────────────────────────────────────────────────────────────────────
+const API_URL = "https://your-vercel-deployment.vercel.app/api/analyze";
+// Change to your deployed Vercel URL ↑
+
+// ── SVG Icons ─────────────────────────────────────────────────────────────────
+const IconSun = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+  </svg>
+);
+
+const IconMoon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+  </svg>
+);
+
+const IconFigma = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M8 24c2.208 0 4-1.792 4-4v-4H8c-2.208 0-4 1.792-4 4s1.792 4 4 4z"/><path d="M4 12c0-2.208 1.792-4 4-4h4v8H8c-2.208 0-4-1.792-4-4z"/><path d="M4 4c0-2.208 1.792-4 4-4h4v8H8C5.792 8 4 6.208 4 4z"/><path d="M12 0h4c2.208 0 4 1.792 4 4s-1.792 4-4 4h-4V0z"/><path d="M20 12c0 2.208-1.792 4-4 4s-4-1.792-4-4 1.792-4 4-4 4 1.792 4 4z"/>
+  </svg>
+);
+
+const IconCopy = () => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+  </svg>
+);
+
+const IconCheck = () => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+);
+
+const IconExport = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+);
+
+const IconSave = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+  </svg>
+);
+
+// ── Code Copy Button ──────────────────────────────────────────────────────────
+function CopyButton({ code }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard?.writeText(code).catch(() => {
+      const ta = document.createElement("textarea");
+      ta.value = code;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+    });
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button className={`code-copy ${copied ? "copied" : ""}`} onClick={handleCopy}>
+      {copied ? <><IconCheck /> Copied!</> : <><IconCopy /> Copy</>}
+    </button>
+  );
+}
+
+// ── Code Block ────────────────────────────────────────────────────────────────
+function CodeBlock({ lang, code }) {
+  return (
+    <div className="code-wrap">
+      <div className="code-header">
+        <span className="code-lang">{lang}</span>
+        <CopyButton code={code} />
+      </div>
+      <pre>{code}</pre>
+    </div>
+  );
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function Toast({ message, icon = "✓", onDone }) {
+  useEffect(() => {
+    const t = setTimeout(onDone, 2800);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div className="toast">
+      <span className="toast-icon">{icon}</span>
+      {message}
+    </div>
+  );
+}
+
+// ── Main App ──────────────────────────────────────────────────────────────────
+function App() {
+  const [theme, setTheme] = useState("dark");
+  const [selectionInfo, setSelectionInfo] = useState({ count: 0, names: [] });
+  const [imageBase64, setImageBase64] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [analysisResult, setAnalysisResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingMsg, setLoadingMsg] = useState("");
+  const [activeOutputTab, setActiveOutputTab] = useState("doc");
+  const [activeCodeTab, setActiveCodeTab] = useState("react");
+  const [versionSaved, setVersionSaved] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [source, setSource] = useState("upload"); // "figma" | "upload"
+
+  // ── Theme toggle ────────────────────────────────────────────
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.setAttribute("data-theme", next);
+  };
+
+  // ── Listen to plugin messages ────────────────────────────────
+  useEffect(() => {
+    const handler = (event) => {
+      const msg = event.data?.pluginMessage;
+      if (!msg) return;
+
+      switch (msg.type) {
+        case "SELECTION_CHANGED":
+          setSelectionInfo({ count: msg.count, names: msg.names });
+          break;
+        case "SELECTION_INFO":
+          setSelectionInfo({ count: msg.nodes.length, names: msg.nodes.map(n => n.name) });
+          break;
+        case "EXPORT_SUCCESS":
+          setImageBase64(msg.base64);
+          setImagePreview(`data:image/png;base64,${msg.base64}`);
+          setSource("figma");
+          runAnalysis(msg.base64);
+          break;
+        case "EXPORT_ERROR":
+          showToast("⚠ " + msg.error, "⚠");
+          setLoading(false);
+          break;
+        case "VERSION_SAVED":
+          setVersionSaved(true);
+          showToast(`Version saved: "${msg.label}"`, "🏷");
+          setTimeout(() => setVersionSaved(false), 5000);
+          break;
+        case "VERSION_ERROR":
+          showToast("Could not save version: " + msg.error, "✗");
+          break;
+      }
+    };
+    window.addEventListener("message", handler);
+    // Ask for current selection on mount
+    postToPlugin({ type: "GET_SELECTION_INFO" });
+    return () => window.removeEventListener("message", handler);
+  }, []);
+
+  // ── Post to plugin ────────────────────────────────────────────
+  const postToPlugin = (msg) => {
+    parent.postMessage({ pluginMessage: msg }, "*");
+  };
+
+  // ── Show toast helper ─────────────────────────────────────────
+  const showToast = (message, icon = "✓") => {
+    setToast({ message, icon, key: Date.now() });
+  };
+
+  // ── Handle file upload ─────────────────────────────────────────
+  const handleFileChange = (file) => {
+    if (!file || !file.type.startsWith("image/")) {
+      showToast("Please upload an image file", "⚠");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      const base64 = dataUrl.split(",")[1];
+      setImageBase64(base64);
+      setImagePreview(dataUrl);
+      setSource("upload");
+      runAnalysis(base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // ── Export from Figma ──────────────────────────────────────────
+  const handleFigmaExport = () => {
+    setLoading(true);
+    setLoadingMsg("Exporting from Figma…");
+    postToPlugin({ type: "EXPORT_SELECTION" });
+  };
+
+  // ── Run AI analysis ────────────────────────────────────────────
+  const runAnalysis = async (base64) => {
+    setLoading(true);
+    setAnalysisResult(null);
+
+    const msgs = [
+      "Parsing visual nodes…",
+      "Mapping states & conditionals…",
+      "Detecting logic gaps…",
+      "Generating documentation…",
+      "Building code snippets…",
+    ];
+    let i = 0;
+    setLoadingMsg(msgs[i]);
+    const interval = setInterval(() => {
+      i = (i + 1) % msgs.length;
+      setLoadingMsg(msgs[i]);
+    }, 1400);
+
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: base64, mimeType: "image/png" }),
+      });
+
+      clearInterval(interval);
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+
+      const data = await res.json();
+      setAnalysisResult(data);
+
+      // Auto-save version after successful analysis
+      postToPlugin({
+        type: "SAVE_VERSION",
+        payload: `FlowDoc AI — ${data.title || "Analysis"} — ${new Date().toLocaleTimeString()}`,
+      });
+
+      showToast("Analysis complete!", "✨");
+    } catch (err) {
+      clearInterval(interval);
+      // In demo mode (no real API), show mock data
+      if (err.message.includes("fetch") || err.message.includes("Failed")) {
+        setAnalysisResult(MOCK_RESULT);
+        showToast("Demo mode — API not connected", "ℹ");
+      } else {
+        showToast("Analysis failed: " + err.message, "✗");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── Confluence export ──────────────────────────────────────────
+  const handleConfluenceExport = () => {
+    if (!analysisResult) return;
+    const title = encodeURIComponent(analysisResult.title || "FlowDoc AI Export");
+    const body = encodeURIComponent(buildConfluenceContent(analysisResult));
+    const url = `https://your-confluence-instance.atlassian.net/wiki/create?title=${title}&body=${body}`;
+    window.open(url, "_blank");
+    showToast("Opening Confluence draft…", "🚀");
+  };
+
+  // Build Confluence wiki markup
+  const buildConfluenceContent = (r) => {
+    const steps = r.steps?.map((s, i) => `${i + 1}. ${s}`).join("\n") || "";
+    const gaps = r.gaps?.map(g => `⚠ ${g.node}: ${g.issue}\n   → ${g.suggestion}`).join("\n") || "";
+    return [
+      `= ${r.title} =\n`,
+      r.description,
+      `\n== Steps ==\n${steps}`,
+      gaps ? `\n== Identified Gaps ==\n${gaps}` : "",
+      `\n_Generated by FlowDoc AI_`,
+    ].join("\n");
+  };
+
+  // ── Render ─────────────────────────────────────────────────────
+  return (
+    <div className="plugin-shell">
+      {/* Header */}
+      <div className="header">
+        <div className="logo">
+          <div className="logo-mark">FA</div>
+          <div className="logo-text">Flow<span>Doc</span> AI</div>
+        </div>
+        <div className="header-actions">
+          <button className="icon-btn" onClick={toggleTheme} title="Toggle theme">
+            {theme === "dark" ? <IconSun /> : <IconMoon />}
+          </button>
+          <button className="icon-btn" onClick={() => postToPlugin({ type: "CLOSE" })} title="Close plugin">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Selection Bar */}
+      <div className="selection-bar">
+        <div className={`sel-indicator ${selectionInfo.count > 0 ? "active" : ""}`} />
+        <span className="sel-text">
+          {selectionInfo.count === 0
+            ? "No selection — select a frame or flow"
+            : selectionInfo.count === 1
+              ? `Selected: ${selectionInfo.names[0]}`
+              : `${selectionInfo.count} nodes selected`
+          }
+        </span>
+        {selectionInfo.count > 0 && (
+          <button className="btn btn-primary btn-sm" onClick={handleFigmaExport} disabled={loading}>
+            <IconFigma /> Analyse
+          </button>
+        )}
+      </div>
+
+      {/* Main Area */}
+      <div className="main">
+
+        {/* Input Card */}
+        <div className="card">
+          <div className="card-title">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Input Source
+          </div>
+
+          {/* Suggestion Alert — shown ABOVE upload */}
+          {analysisResult?.suggestions?.length > 0 && (
+            <div className="suggestion-alert" style={{marginBottom: "10px"}}>
+              <span className="alert-icon">⚡</span>
+              <div className="alert-content">
+                <div className="alert-title">[!] Suggestion: {analysisResult.suggestions[0].title}</div>
+                <div className="alert-desc">{analysisResult.suggestions[0].description}</div>
+              </div>
+              <button className="alert-cta" onClick={() => showToast("Added to gaps list!", "📎")}>
+                + Add
+              </button>
+            </div>
+          )}
+
+          {imagePreview ? (
+            <div style={{ position: "relative" }}>
+              <img src={imagePreview} className="upload-preview" alt="Analysis source" style={{ display: "block", margin: "0 auto" }} />
+              <div style={{ display: "flex", justifyContent: "center", marginTop: "8px", gap: "8px" }}>
+                <span className="tag">{source === "figma" ? "↑ from Figma" : "↑ uploaded"}</span>
+                <button className="btn btn-ghost btn-sm" onClick={() => { setImageBase64(null); setImagePreview(null); setAnalysisResult(null); }}>
+                  Clear
+                </button>
+                <button className="btn btn-secondary btn-sm" onClick={() => imageBase64 && runAnalysis(imageBase64)} disabled={loading}>
+                  Re-analyse
+                </button>
+              </div>
+            </div>
+          ) : (
+            <label
+              className={`upload-zone ${dragOver ? "drag-over" : ""}`}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFileChange(e.dataTransfer.files[0]); }}
+            >
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleFileChange(e.target.files[0])}
+              />
+              <div className="upload-icon">🖼</div>
+              <div className="upload-label">Drop a flowchart image</div>
+              <div className="upload-sub">or click to browse · PNG, JPG, WebP</div>
+            </label>
+          )}
+        </div>
+
+        {/* Loading */}
+        {loading && (
+          <div className="card">
+            <div className="loading-wrap">
+              <div className="spinner" />
+              <div className="loading-msg">{loadingMsg}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Results */}
+        {!loading && analysisResult && (
+          <>
+            {/* Gaps / Constructive Suggestions */}
+            {analysisResult.gaps?.length > 0 && (
+              <div className="card">
+                <div className="card-title">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  Logic Gaps Detected
+                </div>
+                {analysisResult.gaps.map((gap, i) => (
+                  <div key={i} className="gap-card">
+                    <div className="gap-node">⚠ {gap.node}</div>
+                    <div className="gap-issue">{gap.issue}</div>
+                    <div className="gap-suggestion">💡 {gap.suggestion}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Output Tabs */}
+            <div className="card">
+              <div className="confidence-row">
+                <span className={`conf-badge conf-${analysisResult.confidence || "medium"}`}>
+                  {analysisResult.confidence || "medium"} confidence
+                </span>
+                {analysisResult.noiseDetected && (
+                  <span className="tag">noise filtered</span>
+                )}
+              </div>
+
+              <div className="tab-bar">
+                <div className={`tab ${activeOutputTab === "doc" ? "active" : ""}`} onClick={() => setActiveOutputTab("doc")}>Documentation</div>
+                <div className={`tab ${activeOutputTab === "states" ? "active" : ""}`} onClick={() => setActiveOutputTab("states")}>States</div>
+                <div className={`tab ${activeOutputTab === "code" ? "active" : ""}`} onClick={() => setActiveOutputTab("code")}>Code</div>
+              </div>
+
+              {/* Documentation Tab */}
+              {activeOutputTab === "doc" && (
+                <div>
+                  <div className="doc-title">{analysisResult.title}</div>
+                  <div className="doc-description">{analysisResult.description}</div>
+                  <div className="card-title" style={{ marginBottom: "8px" }}>Implementation Steps</div>
+                  <div className="steps-list">
+                    {(analysisResult.steps || []).map((step, i) => (
+                      <div key={i} className="step-item">
+                        <div className="step-num">{i + 1}</div>
+                        <div className="step-text">{step}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {analysisResult.noiseDetected && (
+                    <div style={{ marginTop: "12px" }}>
+                      <div className="noise-note">Ignored visual noise: {analysisResult.noiseDetected}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* States Tab */}
+              {activeOutputTab === "states" && (
+                <div className="states-grid">
+                  {(analysisResult.states || []).map((s) => (
+                    <div key={s.id} className="state-item">
+                      <span className={`state-badge badge-${s.type}`}>{s.type}</span>
+                      <div style={{ flex: 1 }}>
+                        <div className="state-label">{s.label}</div>
+                        {s.description && <div className="state-desc">{s.description}</div>}
+                      </div>
+                      <span className="tag">{s.id}</span>
+                    </div>
+                  ))}
+                  {(!analysisResult.states || analysisResult.states.length === 0) && (
+                    <div className="empty-state">
+                      <div className="empty-state-text">No states extracted</div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Code Tab */}
+              {activeOutputTab === "code" && (
+                <div>
+                  <div className="tab-bar">
+                    <div className={`tab ${activeCodeTab === "react" ? "active" : ""}`} onClick={() => setActiveCodeTab("react")}>React TS</div>
+                    <div className={`tab ${activeCodeTab === "vue" ? "active" : ""}`} onClick={() => setActiveCodeTab("vue")}>Vue 3</div>
+                    <div className={`tab ${activeCodeTab === "vanilla" ? "active" : ""}`} onClick={() => setActiveCodeTab("vanilla")}>Vanilla JS</div>
+                  </div>
+                  {activeCodeTab === "react" && (
+                    <CodeBlock lang="typescript" code={analysisResult.codeLogic?.react || "// No React code generated"} />
+                  )}
+                  {activeCodeTab === "vue" && (
+                    <CodeBlock lang="vue" code={analysisResult.codeLogic?.vue || "// No Vue code generated"} />
+                  )}
+                  {activeCodeTab === "vanilla" && (
+                    <CodeBlock lang="javascript" code={analysisResult.codeLogic?.vanilla || "// No JS code generated"} />
+                  )}
+                </div>
+              )}
+
+              {/* Export Actions */}
+              <div className="divider" />
+              <div className="export-row">
+                <button className="btn btn-primary" onClick={handleConfluenceExport} style={{ flex: 1 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  Export to Confluence
+                </button>
+                <button
+                  className={`version-btn ${versionSaved ? "saved" : ""}`}
+                  onClick={() => postToPlugin({ type: "SAVE_VERSION", payload: `FlowDoc — ${analysisResult.title}` })}
+                  title="Save Figma version checkpoint"
+                >
+                  <IconSave />
+                  {versionSaved ? "Saved!" : "Mark Version"}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Empty State */}
+        {!loading && !analysisResult && !imagePreview && (
+          <div className="empty-state">
+            <div className="empty-state-icon">⬡</div>
+            <div className="empty-state-text">
+              Select a frame in Figma and click <strong>Analyse</strong>,<br />
+              or drop a flowchart image above.
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="footer">
+        <div className="footer-info">
+          <div className="info-icon">i</div>
+          Results are AI generated, verify before use
+        </div>
+      </div>
+
+      {/* Toast */}
+      {toast && (
+        <Toast
+          key={toast.key}
+          message={toast.message}
+          icon={toast.icon}
+          onDone={() => setToast(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Mock result for demo/offline mode ─────────────────────────────────────────
+const MOCK_RESULT = {
+  title: "User Authentication Flow",
+  description: "A multi-step authentication flow covering login, MFA verification, and session management. The flow handles both success and partial-failure paths but is missing an explicit account lockout branch.",
+  confidence: "medium",
+  noiseDetected: "Grid overlay and cursor artifact at top-left corner",
+  states: [
+    { id: "S1", label: "Login Screen", type: "start", description: "Entry point — collect email + password" },
+    { id: "S2", label: "Validate Credentials", type: "conditional", description: "Check credentials against auth service" },
+    { id: "S3", label: "MFA Challenge", type: "state", description: "Send OTP to registered device" },
+    { id: "S4", label: "Verify OTP", type: "conditional", description: "Validate submitted OTP code" },
+    { id: "S5", label: "Create Session", type: "state", description: "Issue JWT + refresh token" },
+    { id: "S6", label: "Dashboard", type: "end", description: "Authenticated landing page" },
+    { id: "S7", label: "Error State", type: "state", description: "Display error message" },
+  ],
+  transitions: [
+    { from: "S1", to: "S2", condition: "Submit" },
+    { from: "S2", to: "S3", condition: "Valid" },
+    { from: "S2", to: "S7", condition: "Invalid" },
+    { from: "S3", to: "S4", condition: "OTP sent" },
+    { from: "S4", to: "S5", condition: "Correct" },
+    { from: "S4", to: "S7", condition: "Incorrect" },
+    { from: "S5", to: "S6", condition: null },
+  ],
+  steps: [
+    "User submits credentials on the Login Screen (S1).",
+    "System validates credentials via auth service (S2). On failure, route to Error State (S7).",
+    "On success, trigger MFA Challenge — send OTP to registered device (S3).",
+    "User submits OTP code. System validates (S4). On 3 consecutive failures, apply rate-limit logic.",
+    "On correct OTP, create authenticated session and issue JWT + refresh token (S5).",
+    "Redirect user to Dashboard (S6) with session context.",
+  ],
+  gaps: [
+    {
+      node: "S2 → Validate Credentials",
+      issue: "No account lockout path after repeated failures. Brute-force attacks possible.",
+      suggestion: "Add a counter state: after 5 failures, transition to 'Account Locked' terminal state with unlock email flow.",
+    },
+    {
+      node: "S4 → Verify OTP",
+      issue: "OTP expiry is unhandled — no timeout branch defined.",
+      suggestion: "Add an 'OTP Expired' conditional after 5 minutes, looping back to S3 with a 'Resend OTP' CTA.",
+    },
+  ],
+  suggestions: [
+    {
+      title: "Add Timeout Logic to OTP Step",
+      description: "The OTP verification node (S4) has no expiry handling. Without this, expired tokens may remain valid indefinitely.",
+      type: "timeout",
+    },
+    {
+      title: "Add Cancel / Back Path",
+      description: "Users have no way to abandon MFA and return to the login screen.",
+      type: "cancel",
+    },
+  ],
+  codeLogic: {
+    react: `// Authentication Flow — React TypeScript
+import { useState, useCallback } from 'react';
+
+type AuthState =
+  | 'idle' | 'validating' | 'mfa_challenge'
+  | 'mfa_verify' | 'creating_session'
+  | 'authenticated' | 'error' | 'locked';
+
+interface AuthFlowState {
+  state: AuthState;
+  failCount: number;
+  otpExpiry: number | null;
+  error: string | null;
+}
+
+export function useAuthFlow() {
+  const [flow, setFlow] = useState<AuthFlowState>({
+    state: 'idle',
+    failCount: 0,
+    otpExpiry: null,
+    error: null,
+  });
+
+  const submitCredentials = useCallback(
+    async (email: string, password: string) => {
+      setFlow(f => ({ ...f, state: 'validating', error: null }));
+      try {
+        const valid = await validateCredentials(email, password);
+        if (!valid) {
+          const next = flow.failCount + 1;
+          // ⚠ Gap suggestion: lockout after 5 attempts
+          if (next >= 5) {
+            setFlow(f => ({ ...f, state: 'locked', failCount: next }));
+          } else {
+            setFlow(f => ({ ...f, state: 'error', failCount: next,
+              error: 'Invalid credentials' }));
+          }
+          return;
+        }
+        await sendOTP(email);
+        // ⚠ Gap suggestion: OTP expiry in 5 min
+        const expiry = Date.now() + 5 * 60 * 1000;
+        setFlow(f => ({ ...f, state: 'mfa_challenge', otpExpiry: expiry }));
+      } catch (err) {
+        setFlow(f => ({ ...f, state: 'error', error: String(err) }));
+      }
+    },
+    [flow.failCount]
+  );
+
+  const submitOTP = useCallback(async (code: string) => {
+    if (flow.otpExpiry && Date.now() > flow.otpExpiry) {
+      setFlow(f => ({ ...f, state: 'error', error: 'OTP expired — request a new one' }));
+      return;
+    }
+    setFlow(f => ({ ...f, state: 'mfa_verify' }));
+    const ok = await verifyOTP(code);
+    if (!ok) {
+      setFlow(f => ({ ...f, state: 'error', error: 'Incorrect OTP' }));
+      return;
+    }
+    setFlow(f => ({ ...f, state: 'creating_session' }));
+    await createSession();
+    setFlow(f => ({ ...f, state: 'authenticated' }));
+  }, [flow.otpExpiry]);
+
+  return { flow, submitCredentials, submitOTP };
+}`,
+    vue: `<!-- Authentication Flow — Vue 3 Composition API -->
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+
+type AuthState = 'idle' | 'validating' | 'mfa_challenge'
+  | 'mfa_verify' | 'authenticated' | 'error' | 'locked';
+
+const state = ref<AuthState>('idle');
+const failCount = ref(0);
+const otpExpiry = ref<number | null>(null);
+const error = ref<string | null>(null);
+
+const isLocked = computed(() => failCount.value >= 5);
+
+async function submitCredentials(email: string, password: string) {
+  state.value = 'validating';
+  error.value = null;
+
+  const valid = await validateCredentials(email, password);
+
+  if (!valid) {
+    failCount.value++;
+    // ⚠ Gap: lockout after 5 attempts
+    state.value = isLocked.value ? 'locked' : 'error';
+    error.value = isLocked.value
+      ? 'Account locked — check email for unlock link'
+      : 'Invalid credentials';
+    return;
+  }
+
+  await sendOTP(email);
+  // ⚠ Gap: 5-min OTP expiry
+  otpExpiry.value = Date.now() + 5 * 60 * 1000;
+  state.value = 'mfa_challenge';
+}
+
+async function submitOTP(code: string) {
+  if (otpExpiry.value && Date.now() > otpExpiry.value) {
+    state.value = 'error';
+    error.value = 'OTP expired';
+    return;
+  }
+  state.value = 'mfa_verify';
+  const ok = await verifyOTP(code);
+  if (!ok) { state.value = 'error'; error.value = 'Wrong OTP'; return; }
+  await createSession();
+  state.value = 'authenticated';
+}
+
+function cancelMFA() {
+  // ⚠ Gap suggestion: cancel path
+  state.value = 'idle';
+  otpExpiry.value = null;
+}
+</script>`,
+    vanilla: `// Authentication Flow — Vanilla TypeScript
+const AUTH_STATES = {
+  IDLE: 'idle', VALIDATING: 'validating',
+  MFA_CHALLENGE: 'mfa_challenge', MFA_VERIFY: 'mfa_verify',
+  AUTHENTICATED: 'authenticated', ERROR: 'error', LOCKED: 'locked'
+};
+
+const MAX_ATTEMPTS = 5; // ⚠ Gap: lockout threshold
+const OTP_TTL_MS = 5 * 60 * 1000; // ⚠ Gap: OTP expiry
+
+class AuthFlowController {
+  private state = AUTH_STATES.IDLE;
+  private failCount = 0;
+  private otpExpiry: number | null = null;
+
+  async submitCredentials(email: string, password: string): Promise<void> {
+    this.setState(AUTH_STATES.VALIDATING);
+
+    const valid = await validateCredentials(email, password);
+    if (!valid) {
+      this.failCount++;
+      if (this.failCount >= MAX_ATTEMPTS) {
+        this.setState(AUTH_STATES.LOCKED);
+        this.emit('locked', { email });
+        return;
+      }
+      this.setState(AUTH_STATES.ERROR,
+        \`Invalid credentials (\${this.failCount}/\${MAX_ATTEMPTS})\`);
+      return;
+    }
+
+    await sendOTP(email);
+    this.otpExpiry = Date.now() + OTP_TTL_MS;
+    this.setState(AUTH_STATES.MFA_CHALLENGE);
+
+    // ⚠ Gap: auto-expire OTP
+    setTimeout(() => {
+      if (this.state === AUTH_STATES.MFA_CHALLENGE) {
+        this.setState(AUTH_STATES.ERROR, 'OTP expired — request a new code');
+        this.otpExpiry = null;
+      }
+    }, OTP_TTL_MS);
+  }
+
+  async submitOTP(code: string): Promise<void> {
+    if (!this.otpExpiry || Date.now() > this.otpExpiry) {
+      this.setState(AUTH_STATES.ERROR, 'OTP expired');
+      return;
+    }
+    this.setState(AUTH_STATES.MFA_VERIFY);
+    const ok = await verifyOTP(code);
+    if (!ok) { this.setState(AUTH_STATES.ERROR, 'Incorrect OTP'); return; }
+    await createSession();
+    this.setState(AUTH_STATES.AUTHENTICATED);
+  }
+
+  cancel(): void {
+    // ⚠ Gap suggestion: cancel path back to idle
+    this.state = AUTH_STATES.IDLE;
+    this.otpExpiry = null;
+    this.emit('cancelled', {});
+  }
+
+  private setState(s: string, error?: string) {
+    this.state = s;
+    this.emit('stateChange', { state: s, error });
+  }
+
+  private emit(evt: string, data: unknown) {
+    window.dispatchEvent(new CustomEvent(\`authflow:\${evt}\`, { detail: data }));
+  }
+}
+
+export default new AuthFlowController();`,
+  },
+};
+
+ReactDOM.render(<App />, document.getElementById("root"));
+</script>
+</body>
+</html>
