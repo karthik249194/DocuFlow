@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "lib": ["ES6"],
+    "strict": false,
+    "outDir": ".",
+    "noEmit": false,
+    "skipLibCheck": true,
+    "sourceMap": false
+  },
+  "include": ["code.ts"]
+}
